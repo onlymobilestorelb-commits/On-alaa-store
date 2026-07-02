@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
 
-// ⚠️ Client-side gate only — password is visible in the built JS bundle.
-// Fine for keeping casual visitors out of the admin UI, not a real
-// security boundary. Upgrade to server-side auth before storing anything sensitive.
-
 const ADMIN_PASSWORD = "A123321A";
 const SESSION_KEY = "admin_authenticated";
 
