@@ -1,118 +1,117 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
-/**
- * AdminAuthWrapper
- * ------------------
- * Gatekeeper for the /admin dashboard.
- * - Shows a branded "ON ALAA STORE" login screen until the correct
- *   password is entered.
- * - Persists the session in sessionStorage (onalaa_admin_session),
- *   so the admin stays logged in while navigating, but is forced to
- *   re-authenticate whenever the browser/tab is closed (sessionStorage
- *   is cleared automatically by the browser in that case).
- * - Renders nothing from the dashboard (children) until authenticated.
- *
- * NOTE ON SECURITY: This hardcodes the password in the client bundle,
- * which means it's technically visible to anyone who inspects the
- * JS. This matches the spec you gave me, but it is NOT true access
- * control — it just keeps casual visitors out. For real protection
- * (hiding orders/product data from anyone but you), the password
- * check needs to happen server-side, e.g. via a Vercel serverless
- * function + signed httpOnly cookie. Happy to build that version
- * too if you want it later.
- */
+const SESSION_KEY = 'onalaa_admin_session';
+const ADMIN_PASSWORD = 'A123321A';
 
-const ADMIN_PASSWORD = "A123321A";
-const SESSION_KEY = "onalaa_admin_session";
+export default function AdminAuthGate({ children }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [shake, setShake] = useState(false);
 
-function AdminLoginScreen({ onSuccess }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  useEffect(() => {
+    const session = sessionStorage.getItem(SESSION_KEY);
+    if (session === 'true') setIsAuthenticated(true);
+    setChecked(true);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, "true");
-      setError(false);
-      onSuccess();
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      setIsAuthenticated(true);
+      setError('');
     } else {
-      setError(true);
-      setPassword("");
+      setError('Incorrect password. Please try again.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setPassword('');
     }
   };
 
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-neutral-950 px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            ON ALAA STORE
-          </h1>
-          <p className="mt-1 text-sm text-neutral-400">Admin Dashboard</p>
+  const handleLogout = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setIsAuthenticated(false);
+  };
+
+  // Avoid a flash of the login screen while sessionStorage is read
+  if (!checked) return null;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0f1e] px-4">
+        {/* subtle background glow */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -left-24 w-72 h-72 bg-yellow-400/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-yellow-400/10 rounded-full blur-3xl" />
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl"
+          className={`relative w-full max-w-sm bg-[#111827] border border-yellow-400/20 rounded-2xl shadow-2xl shadow-black/50 p-8 ${
+            shake ? 'animate-shake' : ''
+          }`}
         >
-          <label
-            htmlFor="admin-password"
-            className="block text-sm font-medium text-neutral-300 mb-2"
-          >
-            Enter admin password
+          <div className="flex flex-col items-center mb-6">
+            <div className="w-14 h-14 rounded-full bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-7 h-7 text-yellow-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-xl font-semibold text-white tracking-tight">
+              Admin Secure Gateway
+            </h1>
+            <p className="text-sm text-gray-400 mt-1 text-center">
+              ON ALAA STORE — restricted access
+            </p>
+          </div>
+
+          <label className="block text-xs font-medium text-gray-400 mb-2">
+            Access Password
           </label>
           <input
-            id="admin-password"
             type="password"
             autoFocus
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
-              if (error) setError(false);
+              if (error) setError('');
             }}
-            placeholder="••••••••"
-            className={`w-full rounded-xl px-4 py-3 bg-neutral-950 text-white border outline-none transition-colors
-              ${error ? "border-red-500 focus:border-red-500" : "border-neutral-700 focus:border-white"}`}
+            placeholder="Enter admin password"
+            className="w-full bg-[#0a0f1e] border border-gray-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 rounded-lg px-4 py-3 text-white placeholder-gray-500 outline-none transition-colors"
           />
 
           {error && (
-            <p className="mt-2 text-sm text-red-500 font-medium">
-              Access Denied — incorrect password.
-            </p>
+            <p className="text-red-400 text-sm mt-2">{error}</p>
           )}
 
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-white text-neutral-950 font-semibold py-3 active:scale-[0.98] transition-transform"
+            className="w-full mt-6 bg-yellow-400 hover:bg-yellow-300 text-[#0a0f1e] font-semibold py-3 rounded-lg transition-colors"
           >
             Unlock Dashboard
           </button>
+
+          <p className="text-xs text-gray-500 text-center mt-5">
+            Session ends when this tab is closed.
+          </p>
         </form>
-
-        <p className="mt-6 text-center text-xs text-neutral-600">
-          Authorized personnel only.
-        </p>
       </div>
-    </div>
-  );
-}
-
-export default function AdminAuthWrapper({ children }) {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    const session = sessionStorage.getItem(SESSION_KEY);
-    setAuthenticated(session === "true");
-    setChecked(true);
-  }, []);
-
-  // Avoid flashing the dashboard before we've checked sessionStorage
-  if (!checked) return null;
-
-  if (!authenticated) {
-    return <AdminLoginScreen onSuccess={() => setAuthenticated(true)} />;
+    );
   }
 
-  return children;
+  // Authenticated: render the protected dashboard, pass logout down if needed
+  return typeof children === 'function' ? children({ onLogout: handleLogout }) : children;
 }
