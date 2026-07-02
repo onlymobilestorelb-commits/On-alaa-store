@@ -9,6 +9,7 @@ import { Store, Shield, ShoppingBag, Eye, Heart, ExternalLink } from 'lucide-rea
 
 import StorefrontView from './components/StorefrontView';
 import AdminDashboardView from './components/AdminDashboardView';
+import AdminGate from './components/AdminGate';
 import ProductModal from './components/ProductModal';
 import CheckoutModal from './components/CheckoutModal';
 
@@ -429,20 +430,22 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <AdminDashboardView
-                products={products}
-                settings={settings}
-                orders={orders}
-                categories={categories}
-                onAddProduct={handleAddProduct}
-                onUpdateProduct={handleUpdateProduct}
-                onDeleteProduct={handleDeleteProduct}
-                onUpdateSettings={updateSettingsState}
-                onUpdateOrderStatus={handleUpdateOrderStatus}
-                onAddCategory={handleAddCategory}
-                language={language}
-                onLanguageChange={updateLanguageState}
-              />
+              <AdminGate>
+                <AdminDashboardView
+                  products={products}
+                  settings={settings}
+                  orders={orders}
+                  categories={categories}
+                  onAddProduct={handleAddProduct}
+                  onUpdateProduct={handleUpdateProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                  onUpdateSettings={updateSettingsState}
+                  onUpdateOrderStatus={handleUpdateOrderStatus}
+                  onAddCategory={handleAddCategory}
+                  language={language}
+                  onLanguageChange={updateLanguageState}
+                />
+              </AdminGate>
             </motion.div>
           )}
         </AnimatePresence>
