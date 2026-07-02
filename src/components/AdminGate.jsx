@@ -17,7 +17,7 @@ export default function AdminGate({ children }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    if (password === A123321A) {
       sessionStorage.setItem(SESSION_KEY, "true");
       setAuthenticated(true);
       setError("");
